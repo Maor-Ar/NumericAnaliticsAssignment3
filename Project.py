@@ -201,22 +201,22 @@ def CheckDominantDiagonal(matrix):
     return True
 
 
-# def DominantDiagonalFix(matrix):
-#     #Check if we have a dominant for each column
-#     dom = []
-#     result = list()
-#     for i in range(len(matrix)):
-#         for j in range(len(matrix[0])):
-#             if matrix[i][j] > sum(map(abs,matrix[i])):
-#                 dom[i]=j
-#     for i in range(len(matrix)):
-#         if i not in dom:
-#             print("Couldn't find dominant diagonal.")
-#             return matrix
-#     for i,j in enumerate(dom):
-#         if i not in dom:
-#             return False
-#     return True
+def DominantDiagonalFix(matrix):
+    #Check if we have a dominant for each column
+    dom = [0]*len(matrix)
+    result = list()
+    for i in range(len(matrix)):
+        for j in range(len(matrix[0])):
+            if (matrix[i][j] > sum(map(abs,map(int,matrix[i])))-matrix[i][j]) :
+                dom[i]=j
+    for i in range(len(matrix)):
+        result.append([])
+        if i not in dom:
+            print("Couldn't find dominant diagonal.")
+            return matrix
+    for i,j in enumerate(dom):
+        result[j]=(matrix[i])
+    return result
 
 def minusMatrix(matrix):
     return [[-i for i in j] for j in matrix]
@@ -261,41 +261,138 @@ def CheckYakobiGnorm(matrix):
 def CheckGeusZaidelGnorm(matrix):
     return 1 > MaxNorm(GeusZaidelG(matrix))
 
-def solveByYakobi(matrix,b,epsilon):
-    itteration=0
-    G = YakobiG(matrix)
-    H = YakobiH(matrix)
-    X = [0] * len(matrix)
-    newX = [epsilon] * len(matrix)
-    first_iteration = False
-    while abs(sum(X)-sum(newX))>3*epsilon or itteration > 100:
-        if not first_iteration:
-            X = newX
-            first_iteration = False
-        newX = matrixAddition(MultiplyMatrix(G,X),MultiplyMatrix(H,b))
-        itteration+=1
-        print(itteration+") "+X)
-    return newX
+# def solveByYakobi(matrix,b,epsilon):
+#     itteration=0
+#     G = YakobiG(matrix)
+#     H = YakobiH(matrix)
+#     X = [0] * len(matrix)
+#     newX = [epsilon] * len(matrix)
+#     first_iteration = False
+#     while abs(sum(X)-sum(newX))>3*epsilon or itteration > 100:
+#         if not first_iteration:
+#             X = newX
+#             first_iteration = False
+#         newX = matrixAddition(MultiplyMatrix(G,X),MultiplyMatrix(H,b))
+#         itteration+=1
+#         print(itteration+") "+X)
+#     return newX
 
-matrixA = [[1, 0, -1], [2, 5, 1], [3, 4, 9]]
-matrixB = [[1, 0, 0], [0, 1, 0], [0, 0, 1]]
-b = [10,20,30]
-# for i in matrixDLUdissasembly(matrixA):
-#     print()
-#     PrintMatrix(i)
-if CheckYakobiGnorm(matrixB):
-    print(solveByYakobi(matrixB,b,0.001))
-else:
-    print("Fkkk")
-a=[[0,0,0],[2,0,0],[0,4,0]]
-b=[[0,2,0],[0,0,4],[0,0,0]]
+def CheckDominantDiagonal(matrix):
+    for i in range(len(matrix)):
+        sum = 0
+        for j in range(len(matrix)):
+            if i != j:
+                sum += abs(matrix[i][j])
+        if abs(matrix[i][i]) <= sum:
+            return False
+    return True
 
-# PrintMatrix(matrixA)
-# PrintMatrix(matrixAddition(matrixA,matrixB))
-# PrintMatrix(minusMatrix(matrixA))
-# vectorb = [[10], [20], [30]]
-# PrintMatrix(matrixA)
-# if CheckDominantDiagonal(matrixA):
-#     print("Diagonal  dominant")
-# else:
-#     print("Diagonal not dominant")
+def InitVector(size):
+    return [0 for index in range(size)]
+
+
+def CopyVector(vector):
+    copy = []
+    for i in range(len(vector)):
+        copy.append(vector[i])
+
+    return copy
+
+
+def JacobiMethod(matrix, vector, epsilon, previous, counter):
+
+    NextGuess = []
+    for i in range(len(matrix)):
+        ins = 0
+        for j in range(len(matrix)):
+            if i != j:
+                ins = ins + matrix[i][j]*previous[j]
+        newGuess = 1/matrix[i][i]*(vector[i]-ins)
+        NextGuess.append(newGuess)
+
+    print("Iteration no. "+str(counter)+" " +str(NextGuess))
+
+    for i in range(len(matrix)):
+        if abs(NextGuess[i] - previous[i]) < epsilon:
+            return
+
+    JacobiMethod(matrix, vector, epsilon,NextGuess,counter+1)
+
+
+def GaussSeidelMethod(matrix, vector, epsilon, previous, counter):
+
+    NextGuess = []
+    ImprovedGuess = CopyVector(previous)
+    for i in range(len(matrix)):
+        ins = 0
+        for j in range(len(matrix)):
+            if i != j:
+                ins = ins + matrix[i][j]*ImprovedGuess[j]
+        newGuess = 1/matrix[i][i]*(vector[i]-ins)
+        ImprovedGuess[i] = newGuess
+        NextGuess.append(newGuess)
+
+    print("Iteration no. "+str(counter)+" " +str(NextGuess))
+
+    for i in range(len(matrix)):
+        if abs(NextGuess[i] - previous[i]) < epsilon:
+            return
+
+    GaussSeidelMethod(matrix, vector, epsilon,NextGuess,counter+1)
+
+
+
+
+matrixA = [ [4,2, 0],[2, 10, 4], [0, 4, 5]]
+b = [2,6,5]
+epsilon=0.00001
+
+
+
+flag=True
+
+input=int(input("Which method do u wanna use to solve the matrix? \n\t1.Jacobi \n\t2.GaussSeidel\n"))
+while (flag):
+    if input == 1 :
+        flag=False
+        #yakobi
+        if CheckDominantDiagonal(matrixA):
+            print("There is a dominant diagonal.")
+            JacobiMethod(matrixA,b,epsilon,InitVector(len(b)),1)
+
+        else:
+            print("There isn't a dominant diagonal.")
+            print("We will try to find dominant diagonal.")
+            dominantFix=DominantDiagonalFix(matrixA)
+            PrintMatrix(dominantFix)
+            if dominantFix != matrixA:
+                print("Found a dominant diagonal.")
+                JacobiMethod(dominantFix,b,epsilon,InitVector(len(b)),1)
+            else:
+                print("didnt find a dominant diagonal.")
+                if CheckYakobiGnorm(matrixA):
+                    print("The matrix convergent.")
+                    JacobiMethod(matrixA,b,epsilon,InitVector(len(b)),1)
+                else:
+                    print("The matrix isn't convergent.")
+    elif input == 2:
+        flag=False
+        #geuss
+        if CheckDominantDiagonal(matrixA):
+            print("There is a dominant diagonal.")
+            GaussSeidelMethod(matrixA,b,epsilon,InitVector(len(b)),1)
+        else:
+            print("There isn't a dominant diagonal.")
+            print("We will try to find dominant diagonal.")
+            dominantFix=DominantDiagonalFix(matrixA)
+            PrintMatrix(dominantFix)
+            if dominantFix != matrixA:
+                print("Found a dominant diagonal.")
+                GaussSeidelMethod(dominantFix,b,epsilon,InitVector(len(b)),1)
+            else:
+                print("didnt find a dominant diagonal.")
+                if CheckGeusZaidelGnorm(matrixA):
+                    print("The matrix convergent.")
+                    GaussSeidelMethod(matrixA,b,epsilon,InitVector(len(b)),1)
+                else:
+                    print("The matrix isn't convergent.")
